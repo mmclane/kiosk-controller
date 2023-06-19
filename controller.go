@@ -100,10 +100,6 @@ func updateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func kiosksHandler(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, os.Getenv("KIOSK_CONFIG"))
-}
-
 func getOptions(kioskNames []string) string {
 	options := ""
 	for i := 0; i < len(kioskNames); i++ {
@@ -135,11 +131,21 @@ func viewHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func kiosksHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("displaying kiosks")
+	http.ServeFile(w, r, os.Getenv("KIOSK_CONFIG"))
+}
+
 func main() {
+
+	// TODO: Check for KIOSK_CONFIG environment variable
+	// If its not set it to kiosk_config.json you get a nil pointer error
+
 	http.HandleFunc("/", viewHandler)
 	http.HandleFunc("/update", updateHandler)
 	http.HandleFunc("/kiosks", kiosksHandler)
-	fmt.Printf("Starting server at port 8090\n")
+	fmt.Println("Starting server at port 8090")
+	// http.ListenAndServe(":8090", nil)
 	err := http.ListenAndServe(":8090", nil) // setting listening port
 	if err != nil {
 		log.Fatal("ListenAndServe: ", err)

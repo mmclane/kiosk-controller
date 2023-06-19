@@ -22,5 +22,5 @@ go.work
 
 .envrc
 *kiosk_config.json
-*/bin/kiosk_controller
+*bin/kiosk_controller*
 

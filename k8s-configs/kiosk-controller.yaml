@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kiosk-controller
+  namespace: m3test
+  annotations:
+    keel.sh/policy: force
+    keel.sh/match-tag: "true"
+    keel.sh/trigger: poll
+    keel.sh/pollSchedule: "@every 1m"
+spec:
+  selector:
+    matchLabels:
+      app: kiosk-controller
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: kiosk-controller        
+    spec:
+      imagePullSecrets:
+            - name: pkg-pull-secret
+      containers:
+        - name: kiosk-controller
+          image: pkgs.doc.network/m3stuff/kiosk_controller:latest
+          imagePullPolicy: Always
+          command: ["/app/kiosk_controller"]
+          env:
+            - name: KIOSK_CONFIG
+              value: "/app/kiosk_config.json"
+          ports:
+            - name: controller
+              containerPort: 8090
+          resources:
+            limits:
+              cpu: "1.5"
+              memory: 2Gi
+            requests:
+              cpu: "0.5"
+              memory: 1Gi
+          # securityContext:
+          #   runAsUser: 6379
+          #   runAsNonRoot: true
+          #   readOnlyRootFilesystem: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kiosk-controller
+  namespace: m3test
+spec:
+  ports:
+    - port: 8090
+      name: controller
+  selector:
+    app: kiosk-controller
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kiosk-controller
+  namespace: m3test
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    external-dns.aplpha.kubernetes.io/hostname: kiosks.m3test.doc.network
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+spec:
+  tls:
+    - hosts:
+        - kiosks.m3test.doc.network
+      secretName: kiosk-controller-certificate
+  rules:
+    - host: kiosks.m3test.doc.network
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: kiosk-controller
+                port:
+                  number: 8090
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: kiosk-controller
+  namespace: m3test
+spec:
+  secretName: kiosk-controller-certificate
+  issuerRef:
+    name: letsencrypt-staging
+    kind: ClusterIssuer
+  dnsNames:
+    - kiosks.m3test.doc.network

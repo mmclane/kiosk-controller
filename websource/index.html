@@ -6,9 +6,12 @@
 <body>
 <div>
     <form method="GET" action="/update">
-        <p></p><label>Kiosk to update: </label><select name="kiosk">
+        <p>
+            <label>Kiosk to update: </label><select name="kiosk">
             {{.Options}}
-        </select>  <input type="submit" value="add" /></p>
+            </select>  
+            <!-- <input type="submit" value="add" /> -->
+        </p>
         <label>New URL: </label><input name="url" size="50" type="text" /> <br><br>
         <input type="submit" value="submit" />
     </form>
